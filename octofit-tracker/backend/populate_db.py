@@ -1,0 +1,168 @@
+#!/usr/bin/env python
+"""
+Script to populate the OctoFit Tracker database with test data.
+Run this script using: python populate_db.py
+"""
+
+import os
+import django
+from datetime import datetime, timedelta
+
+# Setup Django settings
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'octofit_tracker.settings')
+django.setup()
+
+from octofit_tracker.models import User, Team, Activity, Leaderboard, Workout
+
+
+def clear_database():
+    """Clear existing data from all models."""
+    User.objects.all().delete()
+    Team.objects.all().delete()
+    Activity.objects.all().delete()
+    Leaderboard.objects.all().delete()
+    Workout.objects.all().delete()
+    print("✓ Database cleared")
+
+
+def create_teams():
+    """Create test teams."""
+    teams = [
+        {"name": "Octo Warriors", "description": "The strongest fitness team in the ocean"},
+        {"name": "Code Crushers", "description": "Crushing code and fitness goals"},
+        {"name": "Git Gains", "description": "Building muscle through version control"},
+    ]
+    
+    created_teams = []
+    for team_data in teams:
+        team, created = Team.objects.get_or_create(**team_data)
+        created_teams.append(team)
+        status = "created" if created else "exists"
+        print(f"✓ Team '{team.name}' {status}")
+    
+    return created_teams
+
+
+def create_users(teams):
+    """Create test users."""
+    users_data = [
+        {"email": "alice@example.com", "name": "Alice Johnson", "team": teams[0].name, "is_superhero": True},
+        {"email": "bob@example.com", "name": "Bob Smith", "team": teams[0].name, "is_superhero": False},
+        {"email": "charlie@example.com", "name": "Charlie Brown", "team": teams[1].name, "is_superhero": False},
+        {"email": "diana@example.com", "name": "Diana Prince", "team": teams[1].name, "is_superhero": True},
+        {"email": "eve@example.com", "name": "Eve Wilson", "team": teams[2].name, "is_superhero": False},
+        {"email": "frank@example.com", "name": "Frank Miller", "team": teams[2].name, "is_superhero": False},
+    ]
+    
+    created_users = []
+    for user_data in users_data:
+        user, created = User.objects.get_or_create(**user_data)
+        created_users.append(user)
+        status = "created" if created else "exists"
+        print(f"✓ User '{user.name}' ({user.email}) {status}")
+    
+    return created_users
+
+
+def create_activities(users):
+    """Create test activities."""
+    activity_types = ["Running", "Cycling", "Swimming", "Weight Training", "Yoga"]
+    activities = []
+    
+    # Create activities for the past 30 days
+    for user in users:
+        for i in range(5):
+            activity_date = datetime.now().date() - timedelta(days=i*2)
+            activity = Activity.objects.create(
+                user=user,
+                type=activity_types[i % len(activity_types)],
+                duration=30 + (i * 10),
+                date=activity_date
+            )
+            activities.append(activity)
+            print(f"✓ Activity '{activity.type}' for {user.name} on {activity_date}")
+    
+    return activities
+
+
+def create_leaderboard(users):
+    """Create test leaderboard entries."""
+    leaderboard_entries = []
+    
+    for idx, user in enumerate(sorted(users, key=lambda u: u.email)):
+        score = 5000 - (idx * 500)
+        rank = idx + 1
+        
+        entry, created = Leaderboard.objects.get_or_create(
+            user=user,
+            defaults={"score": score, "rank": rank}
+        )
+        
+        leaderboard_entries.append(entry)
+        status = "created" if created else "updated"
+        print(f"✓ Leaderboard entry for {user.name}: Rank {rank}, Score {score} {status}")
+    
+    return leaderboard_entries
+
+
+def create_workouts():
+    """Create test workouts."""
+    workouts_data = [
+        {"name": "Morning Run", "description": "5km easy run", "difficulty": "Easy"},
+        {"name": "HIIT Circuit", "description": "High intensity interval training", "difficulty": "Hard"},
+        {"name": "Strength Training", "description": "Full body workout", "difficulty": "Medium"},
+        {"name": "Yoga Flow", "description": "Relaxing yoga session", "difficulty": "Easy"},
+        {"name": "Spin Class", "description": "Indoor cycling workout", "difficulty": "Medium"},
+        {"name": "CrossFit WOD", "description": "Challenging workout of the day", "difficulty": "Hard"},
+    ]
+    
+    created_workouts = []
+    for workout_data in workouts_data:
+        workout, created = Workout.objects.get_or_create(**workout_data)
+        created_workouts.append(workout)
+        status = "created" if created else "exists"
+        print(f"✓ Workout '{workout.name}' ({workout.difficulty}) {status}")
+    
+    return created_workouts
+
+
+def populate_database():
+    """Main function to populate the database."""
+    print("\n" + "="*50)
+    print("OctoFit Tracker - Database Population Script")
+    print("="*50 + "\n")
+    
+    print("Clearing existing data...")
+    clear_database()
+    
+    print("\nCreating Teams...")
+    teams = create_teams()
+    
+    print("\nCreating Users...")
+    users = create_users(teams)
+    
+    print("\nCreating Activities...")
+    create_activities(users)
+    
+    print("\nCreating Leaderboard...")
+    create_leaderboard(users)
+    
+    print("\nCreating Workouts...")
+    create_workouts()
+    
+    print("\n" + "="*50)
+    print("✓ Database population completed successfully!")
+    print("="*50 + "\n")
+    
+    # Print summary statistics
+    print("Summary:")
+    print(f"  Teams: {Team.objects.count()}")
+    print(f"  Users: {User.objects.count()}")
+    print(f"  Activities: {Activity.objects.count()}")
+    print(f"  Leaderboard Entries: {Leaderboard.objects.count()}")
+    print(f"  Workouts: {Workout.objects.count()}")
+    print()
+
+
+if __name__ == "__main__":
+    populate_database()
