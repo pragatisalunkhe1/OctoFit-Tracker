@@ -15,19 +15,21 @@ class Team(models.Model):
         return self.name
 
 class Activity(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_id = models.CharField(max_length=50)  # Store user ID as string for Djongo compatibility
+    user_email = models.EmailField()  # Store email for reference
     type = models.CharField(max_length=50)
     duration = models.IntegerField()  # in minutes
     date = models.DateField()
     def __str__(self):
-        return f"{self.user.email} - {self.type}"
+        return f"{self.user_email} - {self.type}"
 
 class Leaderboard(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_id = models.CharField(max_length=50)  # Store user ID as string for Djongo compatibility
+    user_email = models.EmailField()  # Store email for reference
     score = models.IntegerField()
     rank = models.IntegerField()
     def __str__(self):
-        return f"{self.user.email} - {self.rank}"
+        return f"{self.user_email} - {self.rank}"
 
 class Workout(models.Model):
     name = models.CharField(max_length=100)

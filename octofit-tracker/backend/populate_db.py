@@ -82,10 +82,28 @@ def create_activities(users):
     activity_types = ["Running", "Cycling", "Swimming", "Weight Training", "Yoga"]
     activities = []
     
-    # Note: Djongo has limitations with ForeignKey relationships
-    # Activities will be created via API endpoints instead
-    print("  ℹ  Activities can be created via API endpoints after setup")
+    base_date = datetime.now().date()
+    activity_count = 0
     
+    for i, user in enumerate(users):
+        for j, activity_type in enumerate(activity_types):
+            try:
+                # Create activities with unique date combinations
+                activity_date = base_date - timedelta(days=(i * len(activity_types) + j))
+                activity = Activity.objects.create(
+                    user_id=str(user.id),
+                    user_email=user.email,
+                    type=activity_type,
+                    duration=30 + (i * 10),  # Vary duration by user
+                    date=activity_date
+                )
+                activities.append(activity)
+                activity_count += 1
+                print(f"  ✓ Activity created: {user.email} - {activity_type}")
+            except Exception as e:
+                print(f"  ✗ Error creating activity for {user.email}: {e}")
+    
+    print(f"  Total activities created: {activity_count}")
     return activities
 
 
@@ -93,9 +111,26 @@ def create_leaderboard(users):
     """Create test leaderboard entries."""
     leaderboard_entries = []
     
-    # Note: Djongo has limitations with ForeignKey relationships
-    # Leaderboard entries will be created via API endpoints instead
-    print("  ℹ  Leaderboard entries can be created via API endpoints after setup")
+    try:
+        # Clear existing leaderboard entries first
+        Leaderboard.objects.all().delete()
+        
+        # Create leaderboard entries based on user superhero status and team
+        for rank, user in enumerate(sorted(users, key=lambda u: (not u.is_superhero, u.name)), start=1):
+            score = 1000 - (rank * 50)  # Descending scores for ranking
+            
+            leaderboard = Leaderboard.objects.create(
+                user_id=str(user.id),
+                user_email=user.email,
+                score=score,
+                rank=rank
+            )
+            leaderboard_entries.append(leaderboard)
+            print(f"  ✓ Leaderboard entry created: Rank {rank} - {user.name} ({score} points)")
+        
+        print(f"  Total leaderboard entries created: {len(leaderboard_entries)}")
+    except Exception as e:
+        print(f"  ✗ Error creating leaderboard entries: {e}")
     
     return leaderboard_entries
 
