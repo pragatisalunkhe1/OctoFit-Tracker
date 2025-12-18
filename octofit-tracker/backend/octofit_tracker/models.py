@@ -22,6 +22,14 @@ class Activity(models.Model):
     date = models.DateField()
     def __str__(self):
         return f"{self.user_email} - {self.type}"
+    def __init__(self, *args, **kwargs):
+        # Accept legacy 'user' kwarg (User instance) for compatibility
+        user = kwargs.pop('user', None)
+        if user is not None:
+            # Set user_id and user_email from provided User instance
+            kwargs.setdefault('user_id', str(getattr(user, 'id', '')))
+            kwargs.setdefault('user_email', getattr(user, 'email', ''))
+        super().__init__(*args, **kwargs)
 
 class Leaderboard(models.Model):
     user_id = models.CharField(max_length=50)  # Store user ID as string for Djongo compatibility
@@ -30,6 +38,13 @@ class Leaderboard(models.Model):
     rank = models.IntegerField()
     def __str__(self):
         return f"{self.user_email} - {self.rank}"
+    def __init__(self, *args, **kwargs):
+        # Accept legacy 'user' kwarg (User instance) for compatibility
+        user = kwargs.pop('user', None)
+        if user is not None:
+            kwargs.setdefault('user_id', str(getattr(user, 'id', '')))
+            kwargs.setdefault('user_email', getattr(user, 'email', ''))
+        super().__init__(*args, **kwargs)
 
 class Workout(models.Model):
     name = models.CharField(max_length=100)
